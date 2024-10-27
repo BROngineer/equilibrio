@@ -1,15 +1,14 @@
 use std::net::SocketAddr;
-use clap::Parser;
 use tokio::io::copy;
 use tokio::net::{TcpListener, TcpStream};
 
-use equilibrio::cmd::args::Args;
+use equilibrio::cmd::args::parse;
 
-async fn forward(mut inbound: TcpStream, addr: SocketAddr) -> tokio::io::Result<()> {
-    let mut outbound = TcpStream::connect(addr).await?;
+async fn forward(inbound: TcpStream, addr: SocketAddr) -> tokio::io::Result<()> {
+    let outbound = TcpStream::connect(addr).await?;
 
-    let (mut ri, mut wi) = inbound.split();
-    let (mut ro, mut wo) = outbound.split();
+    let (mut ri, mut wi) = inbound.into_split();
+    let (mut ro, mut wo) = outbound.into_split();
 
     let client_to_server = copy(&mut ri, &mut wo);
     let server_to_client = copy(&mut ro, &mut wi);
@@ -21,18 +20,13 @@ async fn forward(mut inbound: TcpStream, addr: SocketAddr) -> tokio::io::Result<
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
-    let args = Args::parse();
-    
-    let bind_addr: SocketAddr = format!("{}:{}", args.address, args.port)
-        .parse().expect("Invalid socket address");
-    let proxy_addr: SocketAddr = args.endpoint.parse().expect("Invalid socket address");
+    let args = parse();
 
-
-    let listener = TcpListener::bind(bind_addr).await?;
+    let listener = TcpListener::bind(args.bind_address).await?;
     loop {
         let (inbound, _) = listener.accept().await?;
         tokio::spawn(async move {
-            if let Err(e) = forward(inbound, proxy_addr).await {
+            if let Err(e) = forward(inbound, args.endpoint).await {
                 eprintln!("Error handling connection: {}", e);
             }
         });
