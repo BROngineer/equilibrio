@@ -1,5 +1,6 @@
 use std::hash::{Hash, Hasher};
 use std::net::{IpAddr, SocketAddr};
+use async_trait::async_trait;
 use crate::balancer::Balancer;
 
 struct EndpointsList {
@@ -36,8 +37,13 @@ impl IpHashBalancer {
     }
 }
 
+#[async_trait]
 impl Balancer for IpHashBalancer {
     fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
         self.endpoints.get(addr.ip())
     }
+
+    // async fn check_health(&mut self) -> Vec<SocketAddr> {
+    //     todo!()
+    // }
 }

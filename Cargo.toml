@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1.83"
 clap = { version = "4.5.20", features = ["derive"] }
 serde = { version = "1.0.213", features = ["derive"] }
-tokio = { version = "1.41.0", features = ["io-util", "macros", "net", "rt-multi-thread"] }
+tokio = { version = "1.41.0", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }

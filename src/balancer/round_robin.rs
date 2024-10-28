@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use async_trait::async_trait;
 use crate::balancer::Balancer;
 
 struct EndpointsList {
@@ -35,8 +36,13 @@ impl RoundRobinBalancer {
     }
 }
 
+#[async_trait]
 impl Balancer for RoundRobinBalancer {
     fn get_endpoint(&mut self, _addr: SocketAddr) -> Option<SocketAddr> {
         self.endpoints.get()
     }
+
+    // async fn check_health(&mut self) -> Vec<SocketAddr> {
+    //     todo!()
+    // }
 }

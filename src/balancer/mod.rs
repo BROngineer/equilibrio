@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use async_trait::async_trait;
 use tokio::io::copy;
 use tokio::net::{TcpListener, TcpStream};
 use crate::balancer::ip_hash::IpHashBalancer;
@@ -12,8 +13,10 @@ pub enum BalancerType {
     IpHash
 }
 
-trait Balancer {
+#[async_trait]
+trait Balancer: Send + Sync {
     fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
+    // async fn check_health(&mut self) -> Vec<SocketAddr>;
 }
 
 pub async fn run(
@@ -26,6 +29,15 @@ pub async fn run(
         BalancerType::RoundRobin => { Box::new(RoundRobinBalancer::new(endpoints)) }
         BalancerType::IpHash => { Box::new(IpHashBalancer::new(endpoints)) }
     };
+    
+    // let mut endpoints: Vec<SocketAddr> = Vec::new();
+    // tokio::spawn(async move {
+    //     loop {
+    //         endpoints = balancer.check_health().await;
+    //         tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+    //     }
+    // });
+    
     loop {
         let (inbound, addr) = listener.accept().await?;
         match balancer.get_endpoint(addr) {
