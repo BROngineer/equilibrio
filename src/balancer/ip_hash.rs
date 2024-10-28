@@ -43,7 +43,7 @@ impl Balancer for IpHashBalancer {
         self.endpoints.get(addr.ip())
     }
 
-    // async fn check_health(&mut self) -> Vec<SocketAddr> {
-    //     todo!()
-    // }
+    fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
+        todo!()
+    }
 }

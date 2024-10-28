@@ -2,11 +2,13 @@ use std::net::SocketAddr;
 use async_trait::async_trait;
 use tokio::io::copy;
 use tokio::net::{TcpListener, TcpStream};
+use crate::balancer::health_check::Checker;
 use crate::balancer::ip_hash::IpHashBalancer;
 use crate::balancer::round_robin::RoundRobinBalancer;
 
 mod round_robin;
 mod ip_hash;
+mod health_check;
 
 pub enum BalancerType {
     RoundRobin,
@@ -16,7 +18,9 @@ pub enum BalancerType {
 #[async_trait]
 trait Balancer: Send + Sync {
     fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
-    // async fn check_health(&mut self) -> Vec<SocketAddr>;
+    
+    // todo: implement update for endpoints so that only healthy one could be chosen
+    fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>);
 }
 
 pub async fn run(
@@ -24,27 +28,25 @@ pub async fn run(
     endpoints: Vec<SocketAddr>,
     balancer_type: BalancerType,
 ) -> tokio::io::Result<()> {
+    let health_checker = Checker::new(endpoints.clone());
     let listener = TcpListener::bind(bind_address).await?;
     let mut balancer: Box<dyn Balancer> = match balancer_type {
         BalancerType::RoundRobin => { Box::new(RoundRobinBalancer::new(endpoints)) }
         BalancerType::IpHash => { Box::new(IpHashBalancer::new(endpoints)) }
     };
     
-    // let mut endpoints: Vec<SocketAddr> = Vec::new();
-    // tokio::spawn(async move {
-    //     loop {
-    //         endpoints = balancer.check_health().await;
-    //         tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-    //     }
-    // });
-    
+    health_checker.start();
+
     loop {
         let (inbound, addr) = listener.accept().await?;
+        balancer.set_healthy_endpoints(health_checker.get_healthy_endpoints());
         match balancer.get_endpoint(addr) {
             None => {
                 eprintln!("No available endpoint");
             }
             Some(ep) => {
+                println!("health_checker: {:?}", health_checker);
+                println!("forwarding to {}", ep);
                 tokio::spawn(async move {
                     if let Err(e) = forward(inbound, ep).await {
                         eprintln!("Error handling connection: {}", e);

@@ -42,7 +42,7 @@ impl Balancer for RoundRobinBalancer {
         self.endpoints.get()
     }
 
-    // async fn check_health(&mut self) -> Vec<SocketAddr> {
-    //     todo!()
-    // }
+    fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
+        todo!()
+    }
 }
