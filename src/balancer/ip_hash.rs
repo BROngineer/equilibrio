@@ -39,7 +39,11 @@ impl IpHashBalancer {
 
 #[async_trait]
 impl Balancer for IpHashBalancer {
-    fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
+    fn get_endpoints(&self) -> Vec<SocketAddr> {
+        self.endpoints.endpoints.clone()
+    }
+
+    fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
         self.endpoints.get(addr.ip())
     }
 

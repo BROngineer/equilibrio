@@ -17,7 +17,10 @@ pub struct Checker {
 impl Checker {
     pub fn new(endpoints: Vec<SocketAddr>) -> Checker {
         Checker {
-            endpoints: Arc::new(Mutex::new(endpoints.iter().map(|&ep| { Endpoint { address: ep, healthy: false } }).collect())),
+            endpoints: Arc::new(Mutex::new(
+                endpoints.iter()
+                    .map(|&ep| { Endpoint { address: ep, healthy: false } })
+                    .collect())),
         }
     }
     
@@ -28,7 +31,7 @@ impl Checker {
             .collect::<Vec<SocketAddr>>()
     }
     
-    pub fn start(&self) {
+    pub fn run(&self) {
         let mut checker = self.clone();
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(5));

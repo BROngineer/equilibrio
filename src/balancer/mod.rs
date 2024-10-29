@@ -16,49 +16,53 @@ pub enum BalancerType {
 }
 
 #[async_trait]
-trait Balancer {
-    fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
+pub trait Balancer: Send + Sync {
+    fn get_endpoints(&self) -> Vec<SocketAddr>;
+    
+    fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
     
     // todo: implement update for endpoints so that only healthy one could be chosen
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>);
+    
+    async fn run(&mut self, bind_address: SocketAddr) -> tokio::io::Result<()> {
+        let health_checker = Checker::new(self.get_endpoints());
+        let listener = TcpListener::bind(bind_address).await?;
+
+        // todo: info log message
+        health_checker.run();
+
+        // todo: info log message
+        loop {
+            let (inbound, addr) = listener.accept().await?;
+            self.set_healthy_endpoints(health_checker.get_healthy_endpoints());
+            match self.next_endpoint(addr) {
+                None => {
+                    // todo: warn log message
+                    eprintln!("No available endpoint");
+                }
+                Some(ep) => {
+                    println!("health_checker: {:?}", health_checker);
+                    // todo: info log message
+                    println!("forwarding to {}", ep);
+                    tokio::spawn(async move {
+                        if let Err(e) = forward(inbound, ep).await {
+                            // todo: error log message
+                            eprintln!("Error handling connection: {}", e);
+                        }
+                    });
+                }
+            };
+        }
+    }
 }
 
-pub async fn run(
-    bind_address: SocketAddr,
-    endpoints: Vec<SocketAddr>,
+pub fn new(
     balancer_type: BalancerType,
-) -> tokio::io::Result<()> {
-    let health_checker = Checker::new(endpoints.clone());
-    let listener = TcpListener::bind(bind_address).await?;
-    let mut balancer: Box<dyn Balancer> = match balancer_type {
-        BalancerType::RoundRobin => { Box::new(RoundRobinBalancer::new(endpoints)) }
-        BalancerType::IpHash => { Box::new(IpHashBalancer::new(endpoints)) }
-    };
-
-    // todo: info log message
-    health_checker.start();
-
-    // todo: info log message
-    loop {
-        let (inbound, addr) = listener.accept().await?;
-        balancer.set_healthy_endpoints(health_checker.get_healthy_endpoints());
-        match balancer.get_endpoint(addr) {
-            None => {
-                // todo: warn log message
-                eprintln!("No available endpoint");
-            }
-            Some(ep) => {
-                println!("health_checker: {:?}", health_checker);
-                // todo: info log message
-                println!("forwarding to {}", ep);
-                tokio::spawn(async move {
-                    if let Err(e) = forward(inbound, ep).await {
-                        // todo: error log message
-                        eprintln!("Error handling connection: {}", e);
-                    }
-                });
-            }
-        };
+    endpoints: Vec<SocketAddr>,
+) -> Box<dyn Balancer> {
+    match balancer_type {
+        BalancerType::RoundRobin => Box::new(RoundRobinBalancer::new(endpoints)),
+        BalancerType::IpHash => Box::new(IpHashBalancer::new(endpoints)),
     }
 }
 

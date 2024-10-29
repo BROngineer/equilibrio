@@ -4,5 +4,6 @@ use equilibrio::cmd::args::parse;
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
     let args = parse();
-    balancer::run(args.bind_address, args.endpoints, args.balancer_type).await
+    let mut balancer = balancer::new(args.balancer_type, args.endpoints);
+    balancer.run(args.bind_address).await
 }

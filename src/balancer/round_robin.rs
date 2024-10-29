@@ -38,7 +38,11 @@ impl RoundRobinBalancer {
 
 #[async_trait]
 impl Balancer for RoundRobinBalancer {
-    fn get_endpoint(&mut self, _addr: SocketAddr) -> Option<SocketAddr> {
+    fn get_endpoints(&self) -> Vec<SocketAddr> {
+        self.endpoints.endpoints.clone()
+    }
+    
+    fn next_endpoint(&mut self, _addr: SocketAddr) -> Option<SocketAddr> {
         self.endpoints.get()
     }
 
