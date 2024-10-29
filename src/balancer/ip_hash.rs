@@ -1,8 +1,8 @@
+use crate::balancer::Balancer;
+use async_trait::async_trait;
 use std::hash::{Hash, Hasher};
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
-use async_trait::async_trait;
-use crate::balancer::Balancer;
 
 struct EndpointsList {
     endpoints: Arc<Vec<SocketAddr>>,
@@ -14,7 +14,7 @@ impl EndpointsList {
             endpoints: Arc::new(endpoints),
         }
     }
-    
+
     fn hash_ip(&self, ip: IpAddr) -> u64 {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         ip.hash(&mut hasher);
@@ -26,7 +26,7 @@ impl EndpointsList {
         let idx = (hash as usize) % self.endpoints.len();
         Some(self.endpoints[idx])
     }
-    
+
     fn endpoints(&self) -> Arc<Vec<SocketAddr>> {
         Arc::clone(&self.endpoints)
     }
@@ -38,7 +38,9 @@ pub struct IpHashBalancer {
 
 impl IpHashBalancer {
     pub fn new(endpoints: Vec<SocketAddr>) -> Self {
-        IpHashBalancer { endpoints: EndpointsList::new(endpoints) }
+        IpHashBalancer {
+            endpoints: EndpointsList::new(endpoints),
+        }
     }
 }
 
