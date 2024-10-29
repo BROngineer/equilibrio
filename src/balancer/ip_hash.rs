@@ -1,16 +1,17 @@
 use std::hash::{Hash, Hasher};
 use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 use async_trait::async_trait;
 use crate::balancer::Balancer;
 
 struct EndpointsList {
-    endpoints: Vec<SocketAddr>,
+    endpoints: Arc<Vec<SocketAddr>>,
 }
 
 impl EndpointsList {
     fn new(endpoints: Vec<SocketAddr>) -> Self {
         EndpointsList {
-            endpoints,
+            endpoints: Arc::new(endpoints),
         }
     }
     
@@ -24,6 +25,10 @@ impl EndpointsList {
         let hash = self.hash_ip(ip);
         let idx = (hash as usize) % self.endpoints.len();
         Some(self.endpoints[idx])
+    }
+    
+    fn endpoints(&self) -> Arc<Vec<SocketAddr>> {
+        Arc::clone(&self.endpoints)
     }
 }
 
@@ -39,8 +44,8 @@ impl IpHashBalancer {
 
 #[async_trait]
 impl Balancer for IpHashBalancer {
-    fn get_endpoints(&self) -> Vec<SocketAddr> {
-        self.endpoints.endpoints.clone()
+    fn get_endpoints(&self) -> Arc<Vec<SocketAddr>> {
+        self.endpoints.endpoints()
     }
 
     fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr> {

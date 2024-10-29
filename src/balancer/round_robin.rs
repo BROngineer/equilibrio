@@ -1,16 +1,17 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
 use async_trait::async_trait;
 use crate::balancer::Balancer;
 
 struct EndpointsList {
-    endpoints: Vec<SocketAddr>,
+    endpoints: Arc<Vec<SocketAddr>>,
     cursor: usize
 }
 
 impl EndpointsList {
     fn new(endpoints: Vec<SocketAddr>) -> EndpointsList {
         EndpointsList {
-            endpoints,
+            endpoints: Arc::new(endpoints),
             cursor: 0
         }
     }
@@ -23,6 +24,10 @@ impl EndpointsList {
                 Some(endpoint)
             }
         }
+    }
+
+    fn endpoints(&self) -> Arc<Vec<SocketAddr>> {
+        Arc::clone(&self.endpoints)
     }
 }
 
@@ -38,8 +43,8 @@ impl RoundRobinBalancer {
 
 #[async_trait]
 impl Balancer for RoundRobinBalancer {
-    fn get_endpoints(&self) -> Vec<SocketAddr> {
-        self.endpoints.endpoints.clone()
+    fn get_endpoints(&self) -> Arc<Vec<SocketAddr>> {
+        self.endpoints.endpoints()
     }
     
     fn next_endpoint(&mut self, _addr: SocketAddr) -> Option<SocketAddr> {

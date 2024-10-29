@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::io::copy;
 use tokio::net::{TcpListener, TcpStream};
@@ -17,7 +18,7 @@ pub enum BalancerType {
 
 #[async_trait]
 pub trait Balancer: Send + Sync {
-    fn get_endpoints(&self) -> Vec<SocketAddr>;
+    fn get_endpoints(&self) -> Arc<Vec<SocketAddr>>;
     
     fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
     

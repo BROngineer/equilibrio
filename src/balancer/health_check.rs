@@ -15,7 +15,7 @@ pub struct Checker {
 }
 
 impl Checker {
-    pub fn new(endpoints: Vec<SocketAddr>) -> Checker {
+    pub fn new(endpoints: Arc<Vec<SocketAddr>>) -> Checker {
         Checker {
             endpoints: Arc::new(Mutex::new(
                 endpoints.iter()
