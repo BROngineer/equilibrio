@@ -16,7 +16,7 @@ pub enum BalancerType {
 }
 
 #[async_trait]
-trait Balancer: Send + Sync {
+trait Balancer {
     fn get_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
     
     // todo: implement update for endpoints so that only healthy one could be chosen
@@ -34,21 +34,26 @@ pub async fn run(
         BalancerType::RoundRobin => { Box::new(RoundRobinBalancer::new(endpoints)) }
         BalancerType::IpHash => { Box::new(IpHashBalancer::new(endpoints)) }
     };
-    
+
+    // todo: info log message
     health_checker.start();
 
+    // todo: info log message
     loop {
         let (inbound, addr) = listener.accept().await?;
         balancer.set_healthy_endpoints(health_checker.get_healthy_endpoints());
         match balancer.get_endpoint(addr) {
             None => {
+                // todo: warn log message
                 eprintln!("No available endpoint");
             }
             Some(ep) => {
                 println!("health_checker: {:?}", health_checker);
+                // todo: info log message
                 println!("forwarding to {}", ep);
                 tokio::spawn(async move {
                     if let Err(e) = forward(inbound, ep).await {
+                        // todo: error log message
                         eprintln!("Error handling connection: {}", e);
                     }
                 });

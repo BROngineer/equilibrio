@@ -48,6 +48,7 @@ impl Checker {
         let mut checked_endpoints: Vec<Endpoint> = Vec::with_capacity(endpoints.len());
         for ep in endpoints.iter() {
             let is_healthy = Checker::check_endpoint(&ep.address).await;
+            // todo: debug log message
             println!("endpoint {} is healthy: {}", ep.address, is_healthy);
             checked_endpoints.push(Endpoint { address: ep.address, healthy: is_healthy });
         }

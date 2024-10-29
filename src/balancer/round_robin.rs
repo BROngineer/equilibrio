@@ -43,6 +43,6 @@ impl Balancer for RoundRobinBalancer {
     }
 
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
-        todo!()
+        
     }
 }
