@@ -1,7 +1,7 @@
+use futures::future::BoxFuture;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use async_trait::async_trait;
-use tokio::io::copy;
 use tokio::net::{TcpListener, TcpStream};
 use crate::balancer::health_check::Checker;
 use crate::balancer::ip_hash::IpHashBalancer;
@@ -11,7 +11,7 @@ mod round_robin;
 mod ip_hash;
 mod health_check;
 
-pub enum BalancerType {
+pub enum Type {
     RoundRobin,
     IpHash
 }
@@ -19,13 +19,17 @@ pub enum BalancerType {
 #[async_trait]
 pub trait Balancer: Send + Sync {
     fn get_endpoints(&self) -> Arc<Vec<SocketAddr>>;
-    
+
     fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr>;
     
     // todo: implement update for endpoints so that only healthy one could be chosen
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>);
-    
-    async fn run(&mut self, bind_address: SocketAddr) -> tokio::io::Result<()> {
+
+    async fn run(
+        &mut self, 
+        bind_address: SocketAddr, 
+        forward_fn: Arc<dyn Fn(TcpStream, SocketAddr) -> BoxFuture<'static, tokio::io::Result<()>> + Send + Sync>
+    ) -> tokio::io::Result<()> {
         let health_checker = Checker::new(self.get_endpoints());
         let listener = TcpListener::bind(bind_address).await?;
 
@@ -45,8 +49,9 @@ pub trait Balancer: Send + Sync {
                     println!("health_checker: {:?}", health_checker);
                     // todo: info log message
                     println!("forwarding to {}", ep);
+                    let fw_fn = forward_fn.clone();
                     tokio::spawn(async move {
-                        if let Err(e) = forward(inbound, ep).await {
+                        if let Err(e) = fw_fn(inbound, ep).await {
                             // todo: error log message
                             eprintln!("Error handling connection: {}", e);
                         }
@@ -58,24 +63,11 @@ pub trait Balancer: Send + Sync {
 }
 
 pub fn new(
-    balancer_type: BalancerType,
+    balancer_type: Type,
     endpoints: Vec<SocketAddr>,
 ) -> Box<dyn Balancer> {
     match balancer_type {
-        BalancerType::RoundRobin => Box::new(RoundRobinBalancer::new(endpoints)),
-        BalancerType::IpHash => Box::new(IpHashBalancer::new(endpoints)),
+        Type::RoundRobin => Box::new(RoundRobinBalancer::new(endpoints)),
+        Type::IpHash => Box::new(IpHashBalancer::new(endpoints)),
     }
-}
-
-async fn forward(inbound: TcpStream, addr: SocketAddr) -> tokio::io::Result<()> {
-    let outbound = TcpStream::connect(addr).await?;
-
-    let (mut ri, mut wi) = inbound.into_split();
-    let (mut ro, mut wo) = outbound.into_split();
-    
-    let client_to_server = copy(&mut ri, &mut wo);
-    let server_to_client = copy(&mut ro, &mut wi);
-
-    tokio::try_join!(client_to_server, server_to_client)?;
-    Ok(())
 }

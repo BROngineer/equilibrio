@@ -15,7 +15,7 @@ impl EndpointsList {
             cursor: 0
         }
     }
-    fn get(&mut self) -> Option<SocketAddr> {
+    fn next(&mut self) -> Option<SocketAddr> {
         match self.endpoints.is_empty() {
             true => { None }
             false => {
@@ -48,7 +48,7 @@ impl Balancer for RoundRobinBalancer {
     }
     
     fn next_endpoint(&mut self, _addr: SocketAddr) -> Option<SocketAddr> {
-        self.endpoints.get()
+        self.endpoints.next()
     }
 
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {

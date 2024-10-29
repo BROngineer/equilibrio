@@ -1,20 +1,29 @@
 use std::net::{SocketAddr, ToSocketAddrs};
 use clap::Parser;
 use serde::Serialize;
-use crate::balancer::BalancerType;
+use crate::balancer::Type;
+use crate::forwarder::ForwarderLayer;
 
 pub struct Config {
     pub bind_address: SocketAddr,
     pub endpoints: Vec<SocketAddr>,
-    pub balancer_type: BalancerType,
+    pub balancer_type: Type,
+    pub layer: ForwarderLayer,
 }
 
 #[derive(clap::ValueEnum, Default, Debug, Clone, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum BalancerTypeArg {
+enum BalancerType {
     #[default]
     RoundRobin,
     IpHash,
+}
+
+#[derive(clap::ValueEnum, Default, Debug, Clone, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum Layer {
+    #[default]
+    Layer4,
 }
 
 #[derive(Parser, Debug)]
@@ -34,7 +43,10 @@ struct Args {
     endpoint: Vec<String>,
 
     #[clap(short = 't', long = "type", default_value_t, value_enum)]
-    balancer: BalancerTypeArg,
+    balancer: BalancerType,
+    
+    #[clap(short = 'l', long = "layer", default_value_t, value_enum)]
+    layer: Layer,
 }
 
 pub fn parse() -> Config {
@@ -46,13 +58,17 @@ pub fn parse() -> Config {
         .map(|e| e.to_socket_addrs().expect("Failed to parse socket address").next().expect("No socket addresses found"))
         .collect::<Vec<_>>();
     let balancer_type = match args.balancer {
-        BalancerTypeArg::RoundRobin => { BalancerType::RoundRobin }
-        BalancerTypeArg::IpHash => { BalancerType::IpHash }
+        BalancerType::RoundRobin => { Type::RoundRobin }
+        BalancerType::IpHash => { Type::IpHash }
+    };
+    let layer = match args.layer {
+        Layer::Layer4 => { ForwarderLayer::Layer4 }
     };
     
     Config {
         bind_address,
         endpoints,
-        balancer_type
+        balancer_type,
+        layer,
     }
 }

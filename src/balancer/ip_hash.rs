@@ -21,7 +21,7 @@ impl EndpointsList {
         hasher.finish()
     }
 
-    fn get(&self, ip: IpAddr) -> Option<SocketAddr> {
+    fn next(&self, ip: IpAddr) -> Option<SocketAddr> {
         let hash = self.hash_ip(ip);
         let idx = (hash as usize) % self.endpoints.len();
         Some(self.endpoints[idx])
@@ -49,7 +49,7 @@ impl Balancer for IpHashBalancer {
     }
 
     fn next_endpoint(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
-        self.endpoints.get(addr.ip())
+        self.endpoints.next(addr.ip())
     }
 
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
