@@ -55,6 +55,6 @@ impl Balancer for IpHashBalancer {
     }
 
     fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
-        todo!()
+        self.endpoints.endpoints = Arc::new(healthy_endpoints.to_vec())
     }
 }

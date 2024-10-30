@@ -53,5 +53,10 @@ impl Balancer for RoundRobinBalancer {
         self.endpoints.next()
     }
 
-    fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {}
+    fn set_healthy_endpoints(&mut self, healthy_endpoints: Vec<SocketAddr>) {
+        self.endpoints.endpoints = Arc::new(healthy_endpoints.to_vec());
+        if self.endpoints.cursor >= healthy_endpoints.len() {
+            self.endpoints.cursor = self.endpoints.endpoints.len().saturating_sub(1);
+        }
+    }
 }

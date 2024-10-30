@@ -1,5 +1,5 @@
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::sync::RwLock;
@@ -61,8 +61,7 @@ impl Checker {
     async fn health_check(&self) {
         let endpoints = self.endpoints.read().await.clone();
 
-        let checked_endpoints = futures::future::join_all(
-            endpoints.iter().map(|ep| async move {
+        let checked_endpoints = futures::future::join_all(endpoints.iter().map(|ep| async move {
             let is_healthy = Checker::check_endpoint(&ep.address).await;
             event!(
                 Level::DEBUG,
@@ -74,8 +73,8 @@ impl Checker {
                 address: ep.address,
                 healthy: is_healthy,
             }
-        })
-        ).await;
+        }))
+        .await;
 
         let mut endpoints_lock = self.endpoints.write().await;
         *endpoints_lock = checked_endpoints;
