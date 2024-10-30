@@ -51,7 +51,7 @@ pub trait Balancer: Send + Sync {
         event!(Level::INFO, "starting tcp listener");
         loop {
             let (inbound, addr) = listener.accept().await?;
-            self.set_healthy_endpoints(health_checker.get_healthy_endpoints());
+            self.set_healthy_endpoints(health_checker.get_healthy_endpoints().await);
             match self.next_endpoint(addr) {
                 None => {
                     event!(Level::WARN, "no available endpoints");

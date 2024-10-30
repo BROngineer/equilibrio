@@ -8,6 +8,6 @@ async-trait = "0.1.83"
 clap = { version = "4.5.20", features = ["derive"] }
 futures = "0.3.31"
 serde = { version = "1.0.213", features = ["derive"] }
-tokio = { version = "1.41.0", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
+tokio = { version = "1.41.0", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["json"] }
