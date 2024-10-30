@@ -12,7 +12,7 @@ pub struct Config {
     pub balancer_type: Type,
     pub layer: ForwarderLayer,
     pub log_format: Format,
-    pub log_level: tracing::Level,
+    pub log_level: Level,
 }
 
 #[derive(clap::ValueEnum, Default, Debug, Clone, Serialize)]

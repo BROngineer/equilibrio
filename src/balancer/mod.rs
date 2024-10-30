@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tracing::{event, instrument, Level};
 
-mod health_check;
+pub mod health_check;
 mod ip_hash;
 mod round_robin;
 
