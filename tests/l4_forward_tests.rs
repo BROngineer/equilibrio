@@ -24,7 +24,7 @@ async fn test_l4_forward(fw_address: &str, tgt_address: &str) {
 
     // setup dummy server to act as forward target
     let dummy_server = TcpListener::bind(target_address).await.unwrap();
-    tokio::spawn(async move {
+    let dummy_server_task = tokio::spawn(async move {
         let (mut dummy_conn, _) = dummy_server.accept().await.unwrap();
         let mut buf = vec![0; 1024];
         let n = dummy_conn.read(&mut buf).await.unwrap();
@@ -36,6 +36,8 @@ async fn test_l4_forward(fw_address: &str, tgt_address: &str) {
     outbound.shutdown().await.unwrap();
 
     rx.await.unwrap();
+
+    dummy_server_task.await.unwrap();
 }
 
 #[tokio::test]
