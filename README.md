@@ -1,6 +1,10 @@
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/brongineer/equilibrio/tests.yml?branch=main&logo=github&label=tests)
+![Codecov](https://img.shields.io/codecov/c/github/brongineer/equilibrio?logo=codecov)
+![GitHub License](https://img.shields.io/github/license/brongineer/equilibrio)
+
 # equilibrio
 
-Simple load-balancing pet-project.
+Simple load-balancing pet-project. Developing it just for fun and to get a taste of Rust.
 
 ### Load-balancing algorithms
 
