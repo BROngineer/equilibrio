@@ -56,25 +56,25 @@ enum LogLevel {
     author = "BROngineer"
 )]
 struct Args {
-    #[clap(short = 'a', long, default_value = "0.0.0.0")]
+    #[clap(short = 'a', long, default_value = "0.0.0.0", help = "Address to listen on")]
     bind_address: String,
 
-    #[clap(short = 'p', long, default_value = "9080")]
+    #[clap(short = 'p', long, default_value = "9080", help = "Port to listen on")]
     bind_port: u16,
 
-    #[clap(short = 't', long = "type", default_value_t, value_enum)]
+    #[clap(short = 't', long = "type", default_value_t, value_enum, help = "Balancing strategy")]
     balancer: BalancerType,
 
-    #[clap(short = 'l', long = "layer", default_value_t, value_enum)]
+    #[clap(short = 'l', long = "layer", default_value_t, value_enum, help = "OSI layer")]
     layer: Layer,
 
-    #[clap(short = 'e', long)]
+    #[clap(short = 'e', long, help = "Endpoint address to forward to; flag can be used multiple times")]
     endpoint: Vec<String>,
 
-    #[clap(long = "log-format", default_value_t, value_enum)]
+    #[clap(long = "log-format", default_value_t, value_enum, help = "Log format")]
     log_format: LogFormat,
 
-    #[clap(long = "log-level", default_value_t, value_enum)]
+    #[clap(long = "log-level", default_value_t, value_enum, help = "Log level")]
     log_level: LogLevel,
 }
 
