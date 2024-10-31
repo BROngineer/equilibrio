@@ -22,6 +22,9 @@ impl EndpointsList {
     }
 
     fn next(&self, ip: IpAddr) -> Option<SocketAddr> {
+        if self.endpoints.is_empty() {
+            return None;
+        };
         let hash = self.hash_ip(ip);
         let idx = (hash as usize) % self.endpoints.len();
         Some(self.endpoints[idx])
